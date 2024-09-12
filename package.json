@@ -1,0 +1,15 @@
+{
+  "name": "vp-info",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Benjamin Joly",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "objects-to-csv": "^1.3.6",
+    "pjlink": "github:Bannsaenger/node-pjlink"
+  }
+}
