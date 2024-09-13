@@ -53,6 +53,11 @@ if(useReadline){
 
 // Code
 
+function getOneProjo(vp){
+    nbVP = 1
+    return getDataProjo(vp) 
+}
+
 function getAllProjo(){
     nbVP = vpjson.length
     // vpjson.forEach((vp) => {
@@ -64,10 +69,6 @@ function getAllProjo(){
 }
 
 
-function getOneProjo(vp){
-    nbVP = 1
-    return getDataProjo(vp) 
-}
 
 async function getDataProjo(vp){
     const videoprojecteur = new pjlink(vp.ip, portPjlink)
@@ -87,9 +88,7 @@ async function getDataProjo(vp){
 
 
     await getPowerState().then(
-        data=>{
-            console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
-            
+        data=>{            
             switch(data){
             case 0 : 
                 vpdata['Statut'] = 'Off' 
@@ -120,6 +119,7 @@ async function getDataProjo(vp){
     function getPowerState(){
         return new Promise((resolve, reject) => {
             videoprojecteur.getPowerState((err,state)=>{
+                console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
                 resolve(state)
                 if(err && displayError){
                     reject(console.log(err))
@@ -173,7 +173,7 @@ async function getCSV(){
     let time =  getDate()
 
     const csv = new ObjectsToCsv(vptableau);
-    await csv.toDisk('./tableauvp_'+time+'.csv');
+    await csv.toDisk('./csv/tableauvp_'+time+'.csv');
     console.log('-----------------------------')
     console.log(await csv.toString());
 };
@@ -189,13 +189,9 @@ function end(){
 }
 
 
+//Promise
 //https://stackoverflow.com/questions/21518381/proper-way-to-wait-for-one-function-to-finish-before-continuing
+//https://fr.javascript.info/async-await
 
-
-
-
-
-
-
-
-
+//Cut promise when is to loog
+//https://stackoverflow.com/questions/75869470/terminate-a-function-thats-taking-too-long
