@@ -14,7 +14,7 @@ var goCSV = 0
 // Paramètre
 
 const createCSV = true
-const useReadline = false
+const useReadline = true
 const displayError = false
 const displayVptableau = false
 
