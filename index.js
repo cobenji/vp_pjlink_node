@@ -1,5 +1,6 @@
 const pjlink = require('pjlink');
 const ObjectsToCsv = require('objects-to-csv');
+const requestCommand = require('./requestCommand.js')
 
 //const vpjson = require('./json/vplist_test.json');
 //const vpjson = require('./json/vplist_cocteau.json');
@@ -14,8 +15,7 @@ var goCSV = 0
 // Paramètre
 
 const createCSV = false
-const useReadline = false
-const displayError = false
+const useReadline = true
 const displayVptableau = false
 
 //const vpip = "192.168.0.3"
@@ -71,7 +71,7 @@ function getAllProjo(){
 
 
 async function getDataProjo(vp){
-    const videoprojecteur = new PJLink(vp.ip, portPjlink)
+    const videoprojecteur = new pjlink(vp.ip, portPjlink)
     let isConnected = true
 
     let vpdata = {
@@ -81,14 +81,14 @@ async function getDataProjo(vp){
         'Modèle': '',
         'Référence': '',
         'Lampe': '',
-        'Statut':'',
-        'Commentaire': ''
+        'Statut':''
     }
 
 
 
-    await getPowerState(videoprojecteur).then(
-        data=>{            
+    await requestCommand.getPowerState(videoprojecteur).then(
+        data=>{         
+            console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')   
             switch(data){
             case 0 : 
                 vpdata['Statut'] = 'Off' 
@@ -110,42 +110,17 @@ async function getDataProjo(vp){
                 break;
             default:
                 isConnected = false
-                vpdata['Commentaire'] = 'Pas de connexion'
+                vpdata['Statut'] = 'Pas de connexion'
                 console.log('Pas de connexion pour',vp.name,'-',vp.ip)
         }
     })
 
-    function getPowerState(videoprojecteur){
-        return new Promise((resolve, reject) => {
-            videoprojecteur.getPowerState((err,state)=>{
-                console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
-                resolve(state)
-                if(err && displayError){
-                    reject(console.log(err))
-                }
-            })
-        })
-    }
-
     if(isConnected){
-        videoprojecteur.getModel(function (err,model) {
-            return vpdata['Modèle'] = model
-        });
-
-        videoprojecteur.getInfo(function (err,info) {
-            return vpdata['Référence'] = info
-        });
-
-        videoprojecteur.getManufacturer(function (err,manufacturer) {
-            return vpdata['Marque'] = manufacturer
-        });
-
-        videoprojecteur.getLamps(function (err,lamps) {
-            //vpdata['Lampe'] = lamps
-            return vpdata['Lampe'] = lamps?.[0]['hours']
-        }); 
+        await requestCommand.getModel(videoprojecteur).then(data=>{vpdata['Modèle'] = data})
+        await requestCommand.getInfo(videoprojecteur).then(data=>{vpdata['Référence'] = data})
+        await requestCommand.getManufacturer(videoprojecteur).then(data=>{vpdata['Marque'] = data})
+        await requestCommand.getLamps(videoprojecteur).then(data=>{vpdata['Lampe'] = data?.[0]['hours']})
         console.log('OK')
-
     }
 
     vptableau.push(vpdata)
