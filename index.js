@@ -13,8 +13,8 @@ var goCSV = 0
 
 // Paramètre
 
-const createCSV = true
-const useReadline = true
+const createCSV = false
+const useReadline = false
 const displayError = false
 const displayVptableau = false
 
@@ -71,7 +71,7 @@ function getAllProjo(){
 
 
 async function getDataProjo(vp){
-    const videoprojecteur = new pjlink(vp.ip, portPjlink)
+    const videoprojecteur = new PJLink(vp.ip, portPjlink)
     let isConnected = true
 
     let vpdata = {
@@ -87,7 +87,7 @@ async function getDataProjo(vp){
 
 
 
-    await getPowerState().then(
+    await getPowerState(videoprojecteur).then(
         data=>{            
             switch(data){
             case 0 : 
@@ -113,10 +113,9 @@ async function getDataProjo(vp){
                 vpdata['Commentaire'] = 'Pas de connexion'
                 console.log('Pas de connexion pour',vp.name,'-',vp.ip)
         }
-    }
-    )
-    
-    function getPowerState(){
+    })
+
+    function getPowerState(videoprojecteur){
         return new Promise((resolve, reject) => {
             videoprojecteur.getPowerState((err,state)=>{
                 console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
@@ -162,7 +161,7 @@ async function goplus(){
     goCSV = goCSV + 1
     console.log(goCSV,'/',nbVP)
     if (goCSV == nbVP){
-        createCSV ? await getCSV() : console.log('(CSV Off)') 
+        await getCSV() 
         //end()
     }
     return
@@ -173,7 +172,7 @@ async function getCSV(){
     let time =  getDate()
 
     const csv = new ObjectsToCsv(vptableau);
-    await csv.toDisk('./csv/tableauvp_'+time+'.csv');
+    createCSV ? await csv.toDisk('./csv/tableauvp_'+time+'.csv') : console.log('(CSV Off)')
     console.log('-----------------------------')
     console.log(await csv.toString());
 };
