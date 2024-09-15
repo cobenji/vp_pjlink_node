@@ -55,10 +55,22 @@ function getLamps(videoprojecteur){
     })
 }
 
+function getErrors(videoprojecteur){
+    return new Promise((resolve, reject) => {
+        videoprojecteur.getErrors((err,errors)=>{
+            resolve(errors)
+            if(err && displayError){
+                reject(console.log(err))
+            }
+        })
+    })
+}
+
 module.exports = {
     getPowerState,
     getModel,
     getInfo,
     getManufacturer,
-    getLamps
+    getLamps,
+    getErrors
 }

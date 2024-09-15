@@ -60,9 +60,6 @@ function getOneProjo(vp){
 
 function getAllProjo(){
     nbVP = vpjson.length
-    // vpjson.forEach((vp) => {
-    //     return getDataProjo(vp)
-    // })
     for (const vp of vpjson){
         getDataProjo(vp)
     }
@@ -81,7 +78,8 @@ async function getDataProjo(vp){
         'Modèle': '',
         'Référence': '',
         'Lampe': '',
-        'Statut':''
+        'Statut':'',
+        'Erreur':''
     }
 
 
@@ -120,6 +118,7 @@ async function getDataProjo(vp){
         await requestCommand.getInfo(videoprojecteur).then(data=>{vpdata['Référence'] = data})
         await requestCommand.getManufacturer(videoprojecteur).then(data=>{vpdata['Marque'] = data})
         await requestCommand.getLamps(videoprojecteur).then(data=>{vpdata['Lampe'] = data?.[0]['hours']})
+        await requestCommand.getErrors(videoprojecteur).then(data=>{vpdata['Erreur'] = data})
         console.log('OK')
     }
 
@@ -137,7 +136,7 @@ async function goplus(){
     console.log(goCSV,'/',nbVP)
     if (goCSV == nbVP){
         await getCSV() 
-        //end()
+        end()
     }
     return
 }
