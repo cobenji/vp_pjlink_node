@@ -1,5 +1,6 @@
 const pjlink = require('pjlink');
 const ObjectsToCsv = require('objects-to-csv');
+const requestCommand = require('./requestCommand.js')
 
 //const vpjson = require('./json/vplist_test.json');
 //const vpjson = require('./json/vplist_cocteau.json');
@@ -13,9 +14,8 @@ var goCSV = 0
 
 // Paramètre
 
-const createCSV = true
+const createCSV = false
 const useReadline = true
-const displayError = false
 const displayVptableau = false
 
 //const vpip = "192.168.0.3"
@@ -60,9 +60,6 @@ function getOneProjo(vp){
 
 function getAllProjo(){
     nbVP = vpjson.length
-    // vpjson.forEach((vp) => {
-    //     return getDataProjo(vp)
-    // })
     for (const vp of vpjson){
         getDataProjo(vp)
     }
@@ -82,13 +79,14 @@ async function getDataProjo(vp){
         'Référence': '',
         'Lampe': '',
         'Statut':'',
-        'Commentaire': ''
+        'Erreur':''
     }
 
 
 
-    await getPowerState().then(
-        data=>{            
+    await requestCommand.getPowerState(videoprojecteur).then(
+        data=>{         
+            console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')   
             switch(data){
             case 0 : 
                 vpdata['Statut'] = 'Off' 
@@ -110,43 +108,18 @@ async function getDataProjo(vp){
                 break;
             default:
                 isConnected = false
-                vpdata['Commentaire'] = 'Pas de connexion'
+                vpdata['Statut'] = 'Pas de connexion'
                 console.log('Pas de connexion pour',vp.name,'-',vp.ip)
         }
-    }
-    )
-    
-    function getPowerState(){
-        return new Promise((resolve, reject) => {
-            videoprojecteur.getPowerState((err,state)=>{
-                console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
-                resolve(state)
-                if(err && displayError){
-                    reject(console.log(err))
-                }
-            })
-        })
-    }
+    })
 
     if(isConnected){
-        videoprojecteur.getModel(function (err,model) {
-            return vpdata['Modèle'] = model
-        });
-
-        videoprojecteur.getInfo(function (err,info) {
-            return vpdata['Référence'] = info
-        });
-
-        videoprojecteur.getManufacturer(function (err,manufacturer) {
-            return vpdata['Marque'] = manufacturer
-        });
-
-        videoprojecteur.getLamps(function (err,lamps) {
-            //vpdata['Lampe'] = lamps
-            return vpdata['Lampe'] = lamps?.[0]['hours']
-        }); 
+        await requestCommand.getModel(videoprojecteur).then(data=>{vpdata['Modèle'] = data})
+        await requestCommand.getInfo(videoprojecteur).then(data=>{vpdata['Référence'] = data})
+        await requestCommand.getManufacturer(videoprojecteur).then(data=>{vpdata['Marque'] = data})
+        await requestCommand.getLamps(videoprojecteur).then(data=>{vpdata['Lampe'] = data?.[0]['hours']})
+        await requestCommand.getErrors(videoprojecteur).then(data=>{vpdata['Erreur'] = data})
         console.log('OK')
-
     }
 
     vptableau.push(vpdata)
@@ -162,8 +135,8 @@ async function goplus(){
     goCSV = goCSV + 1
     console.log(goCSV,'/',nbVP)
     if (goCSV == nbVP){
-        createCSV ? await getCSV() : console.log('(CSV Off)') 
-        //end()
+        await getCSV() 
+        end()
     }
     return
 }
@@ -173,7 +146,7 @@ async function getCSV(){
     let time =  getDate()
 
     const csv = new ObjectsToCsv(vptableau);
-    await csv.toDisk('./csv/tableauvp_'+time+'.csv');
+    createCSV ? await csv.toDisk('./csv/tableauvp_'+time+'.csv') : console.log('(CSV Off)')
     console.log('-----------------------------')
     console.log(await csv.toString());
 };
