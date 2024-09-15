@@ -65,12 +65,9 @@ function getAllProjo(){
     }
 }
 
-
-
 async function getDataProjo(vp){
     const videoprojecteur = new pjlink(vp.ip, portPjlink)
     let isConnected = true
-
     let vpdata = {
         'Nom du projecteur': vp.name,
         'Adresse IP': vp.ip,
@@ -82,36 +79,35 @@ async function getDataProjo(vp){
         'Erreur':''
     }
 
-
-
     await requestCommand.getPowerState(videoprojecteur).then(
-        data=>{         
-            console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')   
+        data=>{
+            console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
             switch(data){
-            case 0 : 
-                vpdata['Statut'] = 'Off' 
-                break;
-            case 1 : 
-                vpdata['Statut'] = 'On'
-                break;
-            case 2 : 
-                vpdata['Statut'] = 'Cooling status'
-                break;
-            case 3 : 
-                vpdata['Statut'] = 'Warm-up status'
-                break;
-            case 'ERR3' : 
-                vpdata['Statut'] = 'Unavailable time'
-                break;
-            case 'ERR4' : 
-                vpdata['Statut'] = 'Projector/Display failure'
-                break;
-            default:
-                isConnected = false
-                vpdata['Statut'] = 'Pas de connexion'
-                console.log('Pas de connexion pour',vp.name,'-',vp.ip)
+                case 0 : 
+                    vpdata['Statut'] = 'Off' 
+                    break;
+                case 1 : 
+                    vpdata['Statut'] = 'On'
+                    break;
+                case 2 : 
+                    vpdata['Statut'] = 'Cooling status'
+                    break;
+                case 3 : 
+                    vpdata['Statut'] = 'Warm-up status'
+                    break;
+                case 'ERR3' : 
+                    vpdata['Statut'] = 'Unavailable time'
+                    break;
+                case 'ERR4' : 
+                    vpdata['Statut'] = 'Projector/Display failure'
+                    break;
+                default:
+                    isConnected = false
+                    console.log('Pas de connexion pour',vp.name,'-',vp.ip)
+                    vpdata['Statut'] = 'Pas de connexion'
+            }
         }
-    })
+    )
 
     if(isConnected){
         await requestCommand.getModel(videoprojecteur).then(data=>{vpdata['Modèle'] = data})
@@ -144,7 +140,6 @@ async function goplus(){
 
 async function getCSV(){ 
     let time =  getDate()
-
     const csv = new ObjectsToCsv(vptableau);
     createCSV ? await csv.toDisk('./csv/tableauvp_'+time+'.csv') : console.log('(CSV Off)')
     console.log('-----------------------------')
