@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "config": "^3.3.12",
     "objects-to-csv": "^1.3.6",
     "pjlink": "github:Bannsaenger/node-pjlink"
   }
