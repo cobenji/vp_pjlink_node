@@ -17,8 +17,8 @@ var goCSV = 0
 
 // Paramètre
 
-const awaitBetweenVp = false
 const useReadline = false
+const awaitBetweenVp = false
 const displayVptableau = false
 const createCSV = true
 
@@ -112,7 +112,7 @@ async function getDataProjo(vp){
                     break;
                 default:
                     isConnected = false
-                    console.log('Pas de connexion')
+                    if (awaitBetweenVp) console.log('Pas de connexion')
                     vpdata['Statut'] = 'Pas de connexion'
             }
         }
@@ -124,7 +124,17 @@ async function getDataProjo(vp){
         await requestCommand.getManufacturer(videoprojecteur).then(data=>{vpdata['Marque'] = data})
         await requestCommand.getLamps(videoprojecteur).then(data=>{vpdata['Lampe'] = data?.[0]['hours']})
         await requestCommand.getErrors(videoprojecteur).then(data=>{vpdata['Erreur'] = data})
-        console.log('OK')
+        if (awaitBetweenVp) console.log('OK')
+
+        //A tester
+        //console.time("requetTime")
+        //console.timeEnd("requetTime")
+        // const model = requestCommand.getModel(videoprojecteur).then(data => { vpdata['Modèle'] = data })
+        // const info = requestCommand.getInfo(videoprojecteur).then(data => { vpdata['Référence'] = data })
+        // const mark = requestCommand.getManufacturer(videoprojecteur).then(data => { vpdata['Marque'] = data })
+        // const lamp = requestCommand.getLamps(videoprojecteur).then(data => { vpdata['Lampe'] = data?.[0]['hours'] })
+        // const error = requestCommand.getErrors(videoprojecteur).then(data => { vpdata['Erreur'] = data })
+        // await Promise.allSettled([model, info, mark, lamp, error])
     }
 
     vptableau.push(vpdata)
