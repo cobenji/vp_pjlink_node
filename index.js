@@ -1,7 +1,9 @@
+const fs = require('node:fs');
 //const config = require('config');
 const pjlink = require('pjlink');
 const ObjectsToCsv = require('objects-to-csv');
 const requestCommand = require('./requestCommand.js')
+const fn = require('./fonctions.js')
 
 
 //const vpjson = require('./json/vplist_cocteau.json');
@@ -15,8 +17,8 @@ var goCSV = 0
 
 // Paramètre
 
-const createCSV = false
-const useReadline = true
+const createCSV = true
+const useReadline = false
 const displayVptableau = false
 
 //const vpip = "192.168.0.3"
@@ -132,25 +134,30 @@ async function getDataProjo(vp){
 async function goplus(){
     goCSV = goCSV + 1
     console.log(goCSV,'/',nbVP)
-    if (goCSV == nbVP){
-        await getCSV() 
-        end()
+    if (goCSV != nbVP) {
+        return
     }
+    vptableau.sort((a, b) => a["Nom du projecteur"].localeCompare(b["Nom du projecteur"]));
+    await getCSV()
+    console.log('-----------------------------')
+    fn.table(vptableau)
     return
 }
 
 
 async function getCSV(){ 
-    let time =  getDate()
+    const folderName = './csv';
+    if (!fs.existsSync(folderName)) {
+        fs.mkdirSync(folderName);
+    }
+    const time = getDate()
     const csv = new ObjectsToCsv(vptableau);
-    createCSV ? await csv.toDisk('./csv/tableauvp_'+time+'.csv') : console.log('(CSV Off)')
-    console.log('-----------------------------')
-    console.log(await csv.toString());
+    createCSV ? await csv.toDisk('./csv/tableauvp_' + time + '.csv') : console.log('(CSV Off)')
 };
 
 function getDate(){
-    let date = new Date()
-    let time = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate()+"_"+date.getHours()+"h"+date.getMinutes()
+    const date = new Date()
+    const time = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + "_" + date.getHours() + "h" + date.getMinutes()
     return time
 }
 
