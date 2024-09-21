@@ -7,8 +7,8 @@ const fn = require('./fonctions.js')
 
 
 //const vpjson = require('./json/vplist_cocteau.json');
-const vpjson = require('./json/vplist_dante.json');
-//const vpjson = require('./json/vp.json');
+//const vpjson = require('./json/vplist_dante.json');
+const vpjson = require('./json/vp.json');
 
 let vptableau = []
 let nbVP = 0
@@ -17,9 +17,10 @@ var goCSV = 0
 
 // Paramètre
 
-const createCSV = true
+const awaitBetweenVp = false
 const useReadline = false
 const displayVptableau = false
+const createCSV = true
 
 //const vpip = "192.168.0.3"
 const portPjlink = 4352
@@ -39,32 +40,36 @@ if(useReadline){
     rl.question(`Videoprojecteur 192.168.[---.---] OU entrée pour tous :`, input => {
         if (input == ''){
             rl.close();
-            return getAllProjo()
+            return launchGetDataProjo('all')
         }else{
             let vp = {}
             vp['name'] = 'VP'
             vp['ip'] = "192.168."+input
             console.log(vp)
             rl.close();
-            return getOneProjo(vp)
+            return launchGetDataProjo('one', vp)
         } 
     });
 }else{
-    getAllProjo()
+    launchGetDataProjo('all')
 }
 
 
 // Code
 
-function getOneProjo(vp){
-    nbVP = 1
-    return getDataProjo(vp) 
-}
+async function launchGetDataProjo(mode, vp) {
 
-async function getAllProjo(){
-    nbVP = vpjson.length
-    for (const vp of vpjson){
-        await getDataProjo(vp)
+    if (mode === 'one') {
+        nbVP = 1
+        return getDataProjo(vp)
+    }
+
+    if (mode === 'all') {
+        if (!awaitBetweenVp) console.log('Récupération des informations des VPs... ')
+        nbVP = vpjson.length
+        for (const vp of vpjson) {
+            awaitBetweenVp ? await getDataProjo(vp) : getDataProjo(vp)
+        }
     }
 }
 
@@ -82,7 +87,7 @@ async function getDataProjo(vp){
         'Erreur':''
     }
 
-    console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
+    if (awaitBetweenVp) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
 
     await requestCommand.getPowerState(videoprojecteur).then(
         data=>{
@@ -138,7 +143,7 @@ async function goplus(){
         return
     }
     vptableau.sort((a, b) => a["Nom du projecteur"].localeCompare(b["Nom du projecteur"]));
-    await getCSV()
+    createCSV ? await getCSV() : console.log('(CSV Off)')
     console.log('-----------------------------')
     fn.table(vptableau)
     return
@@ -152,7 +157,7 @@ async function getCSV(){
     }
     const time = getDate()
     const csv = new ObjectsToCsv(vptableau);
-    createCSV ? await csv.toDisk('./csv/tableauvp_' + time + '.csv') : console.log('(CSV Off)')
+    await csv.toDisk('./csv/tableauvp_' + time + '.csv')
 };
 
 function getDate(){
