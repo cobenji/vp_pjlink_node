@@ -101,7 +101,7 @@ async function getDataProjo(vp) {
 
     if (awaitBetweenVp && useReadline) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
 
-    //2 minute d'attente maximum - 120000
+    //2 minutes d'attente maximum - 120000
     await requestCommand.getPowerStateWithTimeout(videoprojecteur,120000).then(data => {
         switch (data) {
             case 0:
