@@ -1,5 +1,5 @@
 const fs = require('node:fs');
-//const config = require('config');
+const config = require('config');
 const pjlink = require('pjlink');
 const ObjectsToCsv = require('objects-to-csv');
 
@@ -8,10 +8,6 @@ const fn = require('./functions.js')
 const progressBar = require('./progressBar.js')
 
 
-const vpjson = require('./json/vplist_cocteau.json');
-//const vpjson = require('./json/vplist_dante.json');
-//const vpjson = require('./json/vp.json');
-
 let vptableau = []
 let nbVP = 0
 var goCSV = 0
@@ -19,10 +15,23 @@ var goCSV = 0
 
 // Paramètre
 
-const useReadline = true
-const awaitBetweenVp = false
-const displayVptableau = false
-const createCSV = false
+const useReadline = config.get('useReadline')
+const awaitBetweenVp = config.get('awaitBetweenVp')
+const displayVptableau = config.get('displayVptableau')
+const createCSV = config.get('createCSV')
+var vpjson
+
+switch (config.get('espace')){
+    case 'dante':
+        vpjson = require('./json/vplist_dante.json');
+        break;
+    case 'cocteau':
+        vpjson = require('./json/vplist_cocteau.json');
+        break;
+    default:
+        vpjson = require('./json/vp.json')
+}
+
 
 //const vpip = "192.168.0.3"
 const portPjlink = 4352
@@ -90,7 +99,7 @@ async function getDataProjo(vp) {
         'Erreur': ''
     }
 
-    if (awaitBetweenVp || useReadline) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
+    if (awaitBetweenVp && useReadline) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
 
     //2 minute d'attente maximum - 120000
     await requestCommand.getPowerStateWithTimeout(videoprojecteur,120000).then(data => {

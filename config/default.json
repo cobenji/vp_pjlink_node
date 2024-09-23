@@ -1,8 +1,9 @@
 {
-"Config" :{
-        "useReadline" : true,
-        "createCSV" : true,
-        "displayVptableau" : false,
-        "espace" : "dante"
-    }
+
+    "useReadline" : true,
+    "createCSV" : true,
+    "displayVptableau" : false,
+    "awaitBetweenVp" : false,
+    "espace" : "dante"
+
 }
