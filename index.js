@@ -8,9 +8,9 @@ const fn = require('./functions.js')
 const progressBar = require('./progressBar.js')
 
 
-//const vpjson = require('./json/vplist_cocteau.json');
+const vpjson = require('./json/vplist_cocteau.json');
 //const vpjson = require('./json/vplist_dante.json');
-const vpjson = require('./json/vp.json');
+//const vpjson = require('./json/vp.json');
 
 let vptableau = []
 let nbVP = 0
@@ -19,7 +19,7 @@ var goCSV = 0
 
 // Paramètre
 
-const useReadline = false
+const useReadline = true
 const awaitBetweenVp = false
 const displayVptableau = false
 const createCSV = false
@@ -47,7 +47,6 @@ if (useReadline) {
             let vp = {}
             vp['name'] = 'VP'
             vp['ip'] = "192.168." + input
-            console.log(vp)
             rl.close();
             return launchGetDataProjo('one', vp)
         }
@@ -63,6 +62,7 @@ async function launchGetDataProjo(mode, vp) {
 
     if (mode === 'one') {
         nbVP = 1
+        bar = progressBar.create(nbVP, 0)
         return getDataProjo(vp)
     }
 
@@ -78,7 +78,7 @@ async function launchGetDataProjo(mode, vp) {
 
 async function getDataProjo(vp) {
     const videoprojecteur = new pjlink(vp.ip, portPjlink)
-    let isConnected = true
+    let isConnected = false
     let vpdata = {
         'Nom du projecteur': vp.name,
         'Adresse IP': vp.ip,
@@ -90,56 +90,58 @@ async function getDataProjo(vp) {
         'Erreur': ''
     }
 
-    if (awaitBetweenVp) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
+    if (awaitBetweenVp || useReadline) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
 
-    await requestCommand.getPowerState(videoprojecteur).then(
-        data => {
-            switch (data) {
-                case 0:
-                    vpdata['Statut'] = 'Off'
-                    break;
-                case 1:
-                    vpdata['Statut'] = 'On'
-                    break;
-                case 2:
-                    vpdata['Statut'] = 'Cooling status'
-                    break;
-                case 3:
-                    vpdata['Statut'] = 'Warm-up status'
-                    break;
-                case 'ERR3':
-                    vpdata['Statut'] = 'Unavailable time'
-                    break;
-                case 'ERR4':
-                    vpdata['Statut'] = 'Projector/Display failure'
-                    break;
-                default:
-                    isConnected = false
-                    console.log('\r')
-                    console.log('Pas de connexion pour', vp.name, '-', vp.ip)
-                    console.log('\n')
-                    vpdata['Statut'] = 'Pas de connexion'
-            }
+    //2 minute d'attente maximum - 120000
+    await requestCommand.getPowerStateWithTimeout(videoprojecteur,120000).then(data => {
+        switch (data) {
+            case 0:
+                isConnected = true
+                vpdata['Statut'] = 'Off'
+                break;
+            case 1:
+                isConnected = true
+                vpdata['Statut'] = 'On'
+                break;
+            case 2:
+                isConnected = true
+                vpdata['Statut'] = 'Cooling status'
+                break;
+            case 3:
+                isConnected = true
+                vpdata['Statut'] = 'Warm-up status'
+                break;
+            case 'ERR3':
+                isConnected = true
+                vpdata['Statut'] = 'Unavailable time'
+                break;
+            case 'ERR4':
+                isConnected = true
+                vpdata['Statut'] = 'Projector/Display failure'
+                break;
+            default:
+                console.log('\r')
+                console.log('Pas de connexion pour', vp.name, '-', vp.ip)
+                vpdata['Statut'] = 'Pas de connexion'
         }
-    )
+    })
+    .catch(error => {
+        if(error == -1){
+            vpdata['Statut'] = "Temps dépassé"
+        }else{
+            console.error('Error:', error.message)
+        }
+    });
+
 
     if (isConnected) {
-        await requestCommand.getModel(videoprojecteur).then(data => { vpdata['Modèle'] = data })
-        await requestCommand.getInfo(videoprojecteur).then(data => { vpdata['Référence'] = data })
-        await requestCommand.getManufacturer(videoprojecteur).then(data => { vpdata['Marque'] = data })
-        await requestCommand.getLamps(videoprojecteur).then(data => { vpdata['Lampe'] = data?.[0]['hours'] })
-        await requestCommand.getErrors(videoprojecteur).then(data => { vpdata['Erreur'] = data })
+        const model = requestCommand.getModel(videoprojecteur).then(data => { vpdata['Modèle'] = data })
+        const info = requestCommand.getInfo(videoprojecteur).then(data => { vpdata['Référence'] = data })
+        const mark = requestCommand.getManufacturer(videoprojecteur).then(data => { vpdata['Marque'] = data })
+        const lamp = requestCommand.getLamps(videoprojecteur).then(data => { vpdata['Lampe'] = data?.[0]['hours'] })
+        const error = requestCommand.getErrors(videoprojecteur).then(data => { vpdata['Erreur'] = data })
+        await Promise.allSettled([model, info, mark, lamp, error])
         if (awaitBetweenVp) console.log('OK')
-
-        //A tester
-        //console.time("requetTime")
-        //console.timeEnd("requetTime")
-        // const model = requestCommand.getModel(videoprojecteur).then(data => { vpdata['Modèle'] = data })
-        // const info = requestCommand.getInfo(videoprojecteur).then(data => { vpdata['Référence'] = data })
-        // const mark = requestCommand.getManufacturer(videoprojecteur).then(data => { vpdata['Marque'] = data })
-        // const lamp = requestCommand.getLamps(videoprojecteur).then(data => { vpdata['Lampe'] = data?.[0]['hours'] })
-        // const error = requestCommand.getErrors(videoprojecteur).then(data => { vpdata['Erreur'] = data })
-        // await Promise.allSettled([model, info, mark, lamp, error])
     }
 
     vptableau.push(vpdata)
@@ -154,10 +156,7 @@ async function getDataProjo(vp) {
 async function endDataProjo() {
     goCSV = goCSV + 1
     bar.update(goCSV)
-    //console.log(goCSV,'/',nbVP)
-    if (goCSV != nbVP) {
-        return
-    }
+    if (goCSV != nbVP) return
     progressBar.stop()
     vptableau.sort((a, b) => a["Nom du projecteur"].localeCompare(b["Nom du projecteur"]));
     console.log('-----------------------------')

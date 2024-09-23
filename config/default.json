@@ -1,10 +1,8 @@
 {
-    "Config" :{
-        "soft" : {
-            "useReadline" : true,
-            "createCSV" : true,
-            "displayVptableau" : false,
-            "espace" : "dante"
-        }
+"Config" :{
+        "useReadline" : true,
+        "createCSV" : true,
+        "displayVptableau" : false,
+        "espace" : "dante"
     }
 }
