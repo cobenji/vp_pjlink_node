@@ -48,7 +48,7 @@ if (useReadline) {
         output: process.stdout,
     });
 
-    rl.question(`Videoprojecteur 192.168.[---.---] OU entrée pour tous :`, input => {
+    rl.question(`Videoprojecteur 192.168.[---.---] ou touche ENTRÉE pour tous :`, input => {
         if (input == '') {
             rl.close();
             return launchGetDataProjo('all')
@@ -101,8 +101,8 @@ async function getDataProjo(vp) {
 
     if (awaitBetweenVp && useReadline) console.log('Récupération des données pour', vp.name, '-', vp.ip, '...')
 
-    //2 minutes d'attente maximum - 120000
-    await requestCommand.getPowerStateWithTimeout(videoprojecteur,120000).then(data => {
+    //1 minutes d'attente maximum - 60000
+    await requestCommand.getPowerStateWithTimeout(videoprojecteur,60000).then(data => {
         switch (data) {
             case 0:
                 isConnected = true
@@ -183,6 +183,7 @@ async function getCSV() {
     const time = getDate()
     const csv = new ObjectsToCsv(vptableau);
     await csv.toDisk('./csv/tableauvp_' + time + '.csv')
+    console.log('(CSV sauvegardé dans ./csv)')
 };
 
 function getDate() {

@@ -1,9 +1,7 @@
 {
-
     "useReadline" : true,
     "createCSV" : true,
     "displayVptableau" : false,
     "awaitBetweenVp" : false,
     "espace" : "dante"
-
 }
